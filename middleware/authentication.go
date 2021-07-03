@@ -1,4 +1,4 @@
-package handler
+package middleware
 
 import (
 	"errors"
@@ -11,14 +11,18 @@ import (
 
 func MiddlewareVerifyTokenHandler(handler http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		tokenString, err := ExtractToken(r)
+		tokenString, err := extractToken(r)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte("not authorized"))
 			return
 		}
-		usecase := usecase.ExtractTokenMetadata(infra.GetData)
-		_, err = usecase(tokenString)
+
+		// need a factory here. :)
+		infra := infra.NewGetDataInfra()
+		usecase := usecase.NewVerifyToken(infra)
+
+		_, err = usecase.Handle(tokenString)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte("not authorized"))
@@ -28,7 +32,7 @@ func MiddlewareVerifyTokenHandler(handler http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
-func ExtractToken(r *http.Request) (string, error) {
+func extractToken(r *http.Request) (string, error) {
 	bearerToken := r.Header.Get("Authorization")
 	var strSplit []string = strings.Split(bearerToken, " ")
 	if len(strSplit) == 0 {

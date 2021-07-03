@@ -1,6 +1,23 @@
 package entity
 
+import "github.com/google/uuid"
+
 type User struct {
-	ID   uint64 `json:"id"`
-	Name string `json:"name"`
+	ID   string
+	Name string
+}
+
+func NewUser(id, name string) *User {
+	if id == "" {
+		id = uuid.New().String()
+	}
+	u := &User{
+		ID:   id,
+		Name: name,
+	}
+	return u
+}
+
+func (u User) Validate() error {
+	return nil
 }
